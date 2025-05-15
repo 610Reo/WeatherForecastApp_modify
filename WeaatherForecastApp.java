@@ -13,7 +13,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 /**
- * 天気予報データを取得するクラス
+ * うんちく天気予報アプリ
  */
 class WeatherDataFetcher {
     public String fetchWeatherData(String targetUrl) throws IOException {
