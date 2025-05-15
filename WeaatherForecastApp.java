@@ -40,7 +40,7 @@ class WeatherDataFetcher {
 }
 
 /**
- * 天気予報データを解析するクラス
+ * 天気予報データを解析するクラスです。
  */
 class WeatherDataParser {
     public List<WeatherForecast> parseWeatherData(String jsonData) {
