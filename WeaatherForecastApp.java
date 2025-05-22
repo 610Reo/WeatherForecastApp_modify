@@ -102,7 +102,7 @@ class WeatherDataDisplayer {
 }
 
 /**
- * 都道府県コードと名前のマッピングを提供するクラス。
+ * 都道府県コードと名前のマッピングを提供するクラス変更した。
  */
 class PrefectureMapper {
     private static final Map<String, String> PREFECTURE_MAP = new HashMap<>();
