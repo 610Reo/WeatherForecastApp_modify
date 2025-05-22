@@ -146,7 +146,7 @@ class PrefectureMapper {
  */
 public class WeaatherForecastApp {
     /**
-     * メイン処理: 天気予報の取得と表示を実行します
+     * メイン処理: 天気予報の取得と表示を実行します。
      * 
      * @param args コマンドライン引数(使用しません)
      */
