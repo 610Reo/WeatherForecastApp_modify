@@ -69,7 +69,7 @@ class WeatherDataParser {
 }
 
 /**
- * 天気予報データを表すクラス
+ * 天気予報データを表すクラス変更した。
  */
 class WeatherForecast {
     private final LocalDateTime dateTime;
@@ -102,7 +102,7 @@ class WeatherDataDisplayer {
 }
 
 /**
- * 都道府県コードと名前のマッピングを提供するクラス変更した。
+ * 都道府県コードと名前のマッピングを提供するクラス
  */
 class PrefectureMapper {
     private static final Map<String, String> PREFECTURE_MAP = new HashMap<>();
