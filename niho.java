@@ -24,7 +24,6 @@ class WeatherDataFetcher {
         URL url = uri.toURL();
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod("GET");
-
         int responseCode = connection.getResponseCode();
         if (responseCode == HttpURLConnection.HTTP_OK) {
             StringBuilder responseBody = new StringBuilder();
@@ -43,7 +42,7 @@ class WeatherDataFetcher {
 }
 
 /**
- * 天気予報データを解析するクラスです。
+ * 天気予報データを解析するクラス
  */
 class WeatherDataParser {
     public List<WeatherForecast> parseWeatherData(String jsonData) {
@@ -51,11 +50,9 @@ class WeatherDataParser {
         JSONArray rootArray = new JSONArray(jsonData);
         JSONObject timeStringObject = rootArray.getJSONObject(0)
                 .getJSONArray("timeSeries").getJSONObject(0);
-
         JSONArray timeDefinesArray = timeStringObject.getJSONArray("timeDefines");
         JSONArray weathersArray = timeStringObject.getJSONArray("areas")
                 .getJSONObject(0).getJSONArray("weathers");
-
         for (int i = 0; i < timeDefinesArray.length(); i++) {
             LocalDateTime dateTime = LocalDateTime.parse(
                     timeDefinesArray.getString(i),
@@ -63,14 +60,11 @@ class WeatherDataParser {
             String weather = weathersArray.getString(i);
             forecasts.add(new WeatherForecast(dateTime, weather));
         }
-
         return forecasts;
     }
 }
 
-/**
- * 天気予報データを表すクラス
- */
+// 天気予報データを表すクラス
 class WeatherForecast {
     private final LocalDateTime dateTime;
     private final String weather;
@@ -106,6 +100,7 @@ class WeatherDataDisplayer {
  */
 class PrefectureMapper {
     private static final Map<String, String> PREFECTURE_MAP = new HashMap<>();
+    private static final Map<String, String> NAME_TO_CODE_MAP = new HashMap<>();
 
     static {
         String[][] prefectures = {
@@ -126,56 +121,55 @@ class PrefectureMapper {
                 { "430000", "熊本県" }, { "440000", "大分県" }, { "450000", "宮崎県" },
                 { "460000", "鹿児島県" }, { "470000", "沖縄県" }
         };
-
         for (String[] prefecture : prefectures) {
             PREFECTURE_MAP.put(prefecture[0], prefecture[1]);
+            NAME_TO_CODE_MAP.put(prefecture[1], prefecture[0]);
         }
     }
 
     public String getPrefectureName(String code) {
         return PREFECTURE_MAP.getOrDefault(code, "不明な都道府県コード");
     }
+
+    public String getPrefectureCodeByName(String name) {
+        return NAME_TO_CODE_MAP.getOrDefault(name, null);
+    }
 }
 
 /**
  * 天気予報アプリ -本体
- * このアプリケーションは、気象庁のWeb APIから天気予報データを取得して表示します
+ * このアプリケーションは、気象庁のWeb APIから大阪府の天気予報データを取得して表示します
+ * このアプリケーションは、気象庁のWeb APIから天気予報データを取得して表示します.
  * 
  * @author n.katayama
  * @version 1.0
  */
-public class WeaatherForecastApp {
-    /**
-     * メイン処理: 天気予報の取得と表示を実行します
-     * 
-     * @param args コマンドライン引数(使用しません)
-     */
+public class niho {
     public static void main(String[] args) {
         PrefectureMapper mapper = new PrefectureMapper();
         WeatherDataFetcher fetcher = new WeatherDataFetcher();
         WeatherDataParser parser = new WeatherDataParser();
         WeatherDataDisplayer displayer = new WeatherDataDisplayer();
 
-        try (Scanner scanner = new Scanner(System.in)) {
-            System.out.print("都道府県コードを入力してください: ");
-            String prefectureCode = scanner.nextLine();
-            String prefectureName = mapper.getPrefectureName(prefectureCode);
-            System.out.println("都道府県名: " + prefectureName);
-
-            if (!prefectureName.equals("不明な都道府県コード")) {
-                String targetUrl = "https://www.jma.go.jp/bosai/forecast/data/forecast/" + prefectureCode + ".json";
-
-                try {
-                    String jsonData = fetcher.fetchWeatherData(targetUrl);
-                    List<WeatherForecast> forecasts = parser.parseWeatherData(jsonData);
-                    displayer.displayWeatherData(forecasts);
-                } catch (IOException e) {
-                    System.err.println("データ取得エラー: " + e.getMessage());
-                } catch (Exception e) {
-                    System.err.println("予期しないエラー: " + e.getMessage());
-                }
-            } else {
-                System.out.println("無効な都道府県コードが入力されました。");
+        try (Scanner scanner = new Scanner(System.in,"Shift_JIS")) {
+            System.out.print("都道府県名を入力してください: ");
+            String prefNameInput = scanner.nextLine().trim();
+            String code = mapper.getPrefectureCodeByName(prefNameInput);
+            if (code == null) {
+                System.out.println("無効な都道府県名が入力されました。");
+                return;
+            }
+            String prefName = mapper.getPrefectureName(code);
+            String targetUrl = "https://www.jma.go.jp/bosai/forecast/data/forecast/" + code + ".json";
+            try {
+                String jsonData = fetcher.fetchWeatherData(targetUrl);
+                List<WeatherForecast> forecasts = parser.parseWeatherData(jsonData);
+                System.out.println(prefName + "の天気予報:");
+                displayer.displayWeatherData(forecasts);
+            } catch (IOException e) {
+                System.err.println("データ取得エラー: " + e.getMessage());
+            } catch (Exception e) {
+                System.err.println("予期しないエラー: " + e.getMessage());
             }
         }
     }
