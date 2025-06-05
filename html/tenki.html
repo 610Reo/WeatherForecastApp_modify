@@ -375,6 +375,178 @@
                 weatherResult.textContent = '天気予報データの取得に失敗しました。';
             }
         });
+
+        document.getElementById('prefectureInput').addEventListener('input', async function () {
+            const prefCodeMap = {
+                "北海道": "016000",
+                "青森県": "020000",
+                "岩手県": "030000",
+                "宮城県": "040000",
+                "秋田県": "050000",
+                "山形県": "060000",
+                "福島県": "070000",
+                "茨城県": "080000",
+                "栃木県": "090000",
+                "群馬県": "100000",
+                "埼玉県": "110000",
+                "千葉県": "120000",
+                "東京都": "130000",
+                "神奈川県": "140000",
+                "新潟県": "150000",
+                "富山県": "160000",
+                "石川県": "170000",
+                "福井県": "180000",
+                "山梨県": "190000",
+                "長野県": "200000",
+                "岐阜県": "210000",
+                "静岡県": "220000",
+                "愛知県": "230000",
+                "三重県": "240000",
+                "滋賀県": "250000",
+                "京都府": "260000",
+                "大阪府": "270000",
+                "兵庫県": "280000",
+                "奈良県": "290000",
+                "和歌山県": "300000",
+                "鳥取県": "310000",
+                "島根県": "320000",
+                "岡山県": "330000",
+                "広島県": "340000",
+                "山口県": "350000",
+                "徳島県": "360000",
+                "香川県": "370000",
+                "愛媛県": "380000",
+                "高知県": "390000",
+                "福岡県": "400000",
+                "佐賀県": "410000",
+                "長崎県": "420000",
+                "熊本県": "430000",
+                "大分県": "440000",
+                "宮崎県": "450000",
+                "鹿児島県": "460100",
+                "沖縄県": "471000"
+            };
+
+            const pref = this.value.trim();
+            const weatherResult = document.getElementById('weatherResult');
+
+            if (!prefCodeMap[pref]) {
+                weatherResult.textContent = '都道府県コードが見つかりません。';
+                return;
+            }
+
+            weatherResult.textContent = '天気予報取得中...';
+            const url = `https://www.jma.go.jp/bosai/forecast/data/forecast/${prefCodeMap[pref]}.json`;
+
+            try {
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('API取得失敗');
+                const data = await res.json();
+
+                const tempsMin = data[1].timeSeries.find(series => series.areas[0].tempsMin);
+                const tempsMax = data[1].timeSeries.find(series => series.areas[0].tempsMax);
+                const weatherSeries = data[0].timeSeries.find(series => series.areas[0].weathers);
+                const times = tempsMin.timeDefines;
+                const minValues = tempsMin.areas[0].tempsMin;
+                const maxValues = tempsMax.areas[0].tempsMax;
+                const weatherValues = weatherSeries.areas[0].weathers;
+
+                let html = `<b>${pref}の天気予報、最高気温、最低気温</b><br><ul>`;
+                for (let i = 0; i < minValues.length; i++) {
+                    html += `<li>${times[i].slice(0, 10)}: 天気 ${weatherValues[i]}, 最低気温 ${minValues[i]}℃, 最高気温 ${maxValues[i]}℃</li>`;
+                }
+                html += '</ul>';
+                weatherResult.innerHTML = html;
+            } catch (e) {
+                weatherResult.textContent = 'データの取得に失敗しました。';
+            }
+        });
+
+        document.getElementById('citySelect').addEventListener('change', async function () {
+            const prefCodeMap = {
+                "北海道": "016000",
+                "青森県": "020000",
+                "岩手県": "030000",
+                "宮城県": "040000",
+                "秋田県": "050000",
+                "山形県": "060000",
+                "福島県": "070000",
+                "茨城県": "080000",
+                "栃木県": "090000",
+                "群馬県": "100000",
+                "埼玉県": "110000",
+                "千葉県": "120000",
+                "東京都": "130000",
+                "神奈川県": "140000",
+                "新潟県": "150000",
+                "富山県": "160000",
+                "石川県": "170000",
+                "福井県": "180000",
+                "山梨県": "190000",
+                "長野県": "200000",
+                "岐阜県": "210000",
+                "静岡県": "220000",
+                "愛知県": "230000",
+                "三重県": "240000",
+                "滋賀県": "250000",
+                "京都府": "260000",
+                "大阪府": "270000",
+                "兵庫県": "280000",
+                "奈良県": "290000",
+                "和歌山県": "300000",
+                "鳥取県": "310000",
+                "島根県": "320000",
+                "岡山県": "330000",
+                "広島県": "340000",
+                "山口県": "350000",
+                "徳島県": "360000",
+                "香川県": "370000",
+                "愛媛県": "380000",
+                "高知県": "390000",
+                "福岡県": "400000",
+                "佐賀県": "410000",
+                "長崎県": "420000",
+                "熊本県": "430000",
+                "大分県": "440000",
+                "宮崎県": "450000",
+                "鹿児島県": "460100",
+                "沖縄県": "471000"
+            };
+
+            const pref = document.getElementById('prefectureInput').value.trim();
+            const weatherResult = document.getElementById('weatherResult');
+
+            if (!prefCodeMap[pref]) {
+                weatherResult.textContent = '都道府県コードが見つかりません。';
+                return;
+            }
+
+            weatherResult.textContent = '天気予報取得中...';
+            const url = `https://www.jma.go.jp/bosai/forecast/data/forecast/${prefCodeMap[pref]}.json`;
+
+            try {
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('API取得失敗');
+                const data = await res.json();
+
+                const tempsMin = data[1].timeSeries.find(series => series.areas[0].tempsMin);
+                const tempsMax = data[1].timeSeries.find(series => series.areas[0].tempsMax);
+                const weatherSeries = data[0].timeSeries.find(series => series.areas[0].weathers);
+                const times = tempsMin.timeDefines;
+                const minValues = tempsMin.areas[0].tempsMin;
+                const maxValues = tempsMax.areas[0].tempsMax;
+                const weatherValues = weatherSeries.areas[0].weathers;
+
+                let html = `<b>${pref}の天気予報、最高気温、最低気温</b><br><ul>`;
+                for (let i = 0; i < Math.min(7, minValues.length); i++) {
+                    html += `<li>${times[i].slice(0, 10)}: 天気 ${weatherValues[i]}, 最低気温 ${minValues[i]}℃, 最高気温 ${maxValues[i]}℃</li>`;
+                }
+                html += '</ul>';
+                weatherResult.innerHTML = html;
+            } catch (e) {
+                weatherResult.textContent = 'データの取得に失敗しました。';
+            }
+        });
     </script>
 </body>
 
