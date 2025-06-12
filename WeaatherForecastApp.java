@@ -109,7 +109,7 @@ class PrefectureMapper {
 
     static {
         String[][] prefectures = {
-                { "010000", "北海道" }, { "020000", "青森県" }, { "030000", "岩手県" },
+                { "010000", "北海道" }, { "011000", "宗谷地方" }, { "020000", "青森県" }, { "030000", "岩手県" },
                 { "040000", "宮城県" }, { "050000", "秋田県" }, { "060000", "山形県" },
                 { "070000", "福島県" }, { "080000", "茨城県" }, { "090000", "栃木県" },
                 { "100000", "群馬県" }, { "110000", "埼玉県" }, { "120000", "千葉県" },
@@ -128,12 +128,12 @@ class PrefectureMapper {
         };
 
         for (String[] prefecture : prefectures) {
-            PREFECTURE_MAP.put(prefecture[0], prefecture[1]);
+            PREFECTURE_MAP.put(prefecture[1], prefecture[0]);
         }
     }
 
-    public String getPrefectureName(String code) {
-        return PREFECTURE_MAP.getOrDefault(code, "不明な都道府県コード");
+    public String getPrefectureCode(String Name) {
+        return PREFECTURE_MAP.getOrDefault(Name,null);
     }
 }
 
@@ -156,13 +156,20 @@ public class WeaatherForecastApp {
         WeatherDataParser parser = new WeatherDataParser();
         WeatherDataDisplayer displayer = new WeatherDataDisplayer();
 
-        try (Scanner scanner = new Scanner(System.in)) {
-            System.out.print("都道府県コードを入力してください: ");
-            String prefectureCode = scanner.nextLine();
-            String prefectureName = mapper.getPrefectureName(prefectureCode);
-            System.out.println("都道府県名: " + prefectureName);
+        try (Scanner scanner = new Scanner(System.in,"Shift_JIS")) {
+            System.out.print("都道府県名を入力してください: ");
+            String prefectureName = scanner.nextLine().trim();
+            String prefectureCode = mapper.getPrefectureCode(prefectureName);
+            System.out.println("都道府県名: " + prefectureCode);
+            if (prefectureName.equals("北海道")) {
+                System.out.println("どの地方の天気を表示するか選んで入力してください");
+                System.out.println(
+                        "宗谷地方  上川地方  網走地方  十勝地方  釧路地方: 日高地方  石狩地方  渡島地方 ");
+                    prefectureName = scanner.nextLine();
+                    prefectureCode = mapper.getPrefectureCode(prefectureName);
+            }
 
-            if (!prefectureName.equals("不明な都道府県コード")) {
+            if (!prefectureCode.equals("不明な都道府県コード")) {
                 String targetUrl = "https://www.jma.go.jp/bosai/forecast/data/forecast/" + prefectureCode + ".json";
 
                 try {

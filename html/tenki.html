@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>天気予報検索</title>
+    <link rel="stylesheet" href="../css/tenki.css" type="text/css">
+</head>
+
+<body>
+    <div class="centerWrap">
+        <h2>天気予報検索</h2>
+        <form id="sampleform">
+            <div class="input-box">
+            <p style="width:100%; text-align:center;">
+                <label>
+                    <div>都道府県を入力して下さい</div>
+                    <input type="text" name="prefecture" class="txtfiled" size="30" placeholder="例：東京都、北海道など"
+                        id="prefectureInput" autocomplete="off">
+                </label>
+            <div id="prefCodeDisplay" style="margin-top:5px;color:#333;font-size:90%"></div>
+            </p>
+            <p style="width:100%; text-align:center;">
+                <label>
+                    <div>市区町村を選択してください</div>
+                    <select id="citySelect" name="city">
+                        <option value="">都道府県を入力してください</option>
+                    </select>
+                </label>
+            </p>
+            </div>
+        </form>
+        <div id="weatherResult"></div>
+    </div>
+    <script>
+        // 47都道府県の市区町村データ（主要市区町村サンプル）
+        const cityData = {
+            "東京都": ["千代田区", "中央区", "港区", "新宿区", "文京区", "台東区", "墨田区", "江東区", "品川区", "目黒区", "大田区", "世田谷区", "渋谷区", "中野区", "杉並区", "豊島区", "北区", "荒川区", "板橋区", "練馬区", "足立区", "葛飾区", "江戸川区"],
+            "北海道": ["札幌市", "函館市", "小樽市", "旭川市", "室蘭市", "釧路市", "帯広市", "北見市", "夕張市", "岩見沢市", "網走市", "留萌市", "苫小牧市", "稚内市", "美唄市", "芦別市", "江別市", "赤平市", "紋別市", "士別市", "名寄市", "三笠市", "根室市", "千歳市", "滝川市", "砂川市", "歌志内市", "深川市", "富良野市", "登別市", "恵庭市", "伊達市", "北広島市", "石狩市", "北斗市"],
+            "青森県": ["青森市", "弘前市", "八戸市", "黒石市", "五所川原市", "十和田市", "三沢市", "むつ市", "つがる市", "平川市"],
+            "岩手県": ["盛岡市", "宮古市", "大船渡市", "花巻市", "北上市", "久慈市", "遠野市", "一関市", "陸前高田市", "釜石市", "二戸市", "八幡平市", "奥州市", "滝沢市"],
+            "宮城県": ["仙台市", "石巻市", "塩竈市", "気仙沼市", "白石市", "名取市", "角田市", "多賀城市", "岩沼市", "登米市", "栗原市", "東松島市", "大崎市"],
+            "秋田県": ["秋田市", "能代市", "横手市", "大館市", "男鹿市", "湯沢市", "鹿角市", "由利本荘市", "潟上市", "大仙市", "北秋田市", "にかほ市", "仙北市"],
+            "山形県": ["山形市", "米沢市", "鶴岡市", "酒田市", "新庄市", "寒河江市", "上山市", "村山市", "長井市", "天童市", "東根市", "尾花沢市", "南陽市"],
+            "福島県": ["福島市", "会津若松市", "郡山市", "いわき市", "白河市", "須賀川市", "喜多方市", "相馬市", "二本松市", "田村市", "南相馬市", "伊達市", "本宮市"],
+            "茨城県": ["水戸市", "日立市", "土浦市", "古河市", "石岡市", "結城市", "龍ケ崎市", "下妻市", "常総市", "常陸太田市", "高萩市", "北茨城市", "笠間市", "取手市", "牛久市", "つくば市", "ひたちなか市", "鹿嶋市", "潮来市", "守谷市", "常陸大宮市", "那珂市", "筑西市", "坂東市", "稲敷市", "かすみがうら市", "桜川市", "神栖市", "行方市", "鉾田市", "つくばみらい市", "小美玉市"],
+            "栃木県": ["宇都宮市", "足利市", "栃木市", "佐野市", "鹿沼市", "日光市", "小山市", "真岡市", "大田原市", "矢板市", "那須塩原市", "さくら市", "那須烏山市", "下野市"],
+            "群馬県": ["前橋市", "高崎市", "桐生市", "伊勢崎市", "太田市", "沼田市", "館林市", "渋川市", "藤岡市", "富岡市", "安中市", "みどり市"],
+            "埼玉県": ["さいたま市", "川越市", "熊谷市", "川口市", "行田市", "秩父市", "所沢市", "飯能市", "加須市", "本庄市", "東松山市", "春日部市", "狭山市", "羽生市", "鴻巣市", "深谷市", "上尾市", "草加市", "越谷市", "蕨市", "戸田市", "入間市", "朝霞市", "志木市", "和光市", "新座市", "桶川市", "久喜市", "北本市", "八潮市", "富士見市", "三郷市", "蓮田市", "坂戸市", "幸手市", "鶴ヶ島市", "日高市", "吉川市", "ふじみ野市"],
+            "千葉県": ["千葉市", "銚子市", "市川市", "船橋市", "館山市", "木更津市", "松戸市", "野田市", "茂原市", "成田市", "佐倉市", "東金市", "旭市", "習志野市", "柏市", "勝浦市", "市原市", "流山市", "八千代市", "我孫子市", "鴨川市", "鎌ケ谷市", "君津市", "富津市", "浦安市", "四街道市", "袖ケ浦市", "八街市", "印西市", "白井市", "富里市", "南房総市", "匝瑳市", "香取市", "山武市", "いすみ市"],
+            "神奈川県": ["横浜市", "川崎市", "相模原市", "横須賀市", "平塚市", "鎌倉市", "藤沢市", "小田原市", "茅ヶ崎市", "逗子市", "三浦市", "秦野市", "厚木市", "大和市", "伊勢原市", "海老名市", "座間市", "南足柄市", "綾瀬市"],
+            "新潟県": ["新潟市", "長岡市", "三条市", "柏崎市", "新発田市", "小千谷市", "加茂市", "十日町市", "見附市", "村上市", "燕市", "糸魚川市", "妙高市", "五泉市", "上越市", "阿賀野市", "佐渡市", "魚沼市", "南魚沼市", "胎内市"],
+            "富山県": ["富山市", "高岡市", "魚津市", "氷見市", "滑川市", "黒部市", "砺波市", "小矢部市", "南砺市", "射水市"],
+            "石川県": ["金沢市", "七尾市", "小松市", "輪島市", "珠洲市", "加賀市", "羽咋市", "かほく市", "白山市", "能美市", "野々市市"],
+            "福井県": ["福井市", "敦賀市", "小浜市", "大野市", "勝山市", "鯖江市", "あわら市", "越前市", "坂井市"],
+            "山梨県": ["甲府市", "富士吉田市", "都留市", "山梨市", "大月市", "韮崎市", "南アルプス市", "北杜市", "甲斐市", "笛吹市", "上野原市", "甲州市", "中央市"],
+            "長野県": ["長野市", "松本市", "上田市", "岡谷市", "飯田市", "諏訪市", "須坂市", "小諸市", "伊那市", "駒ヶ根市", "中野市", "大町市", "飯山市", "茅野市", "塩尻市", "佐久市", "千曲市", "東御市", "安曇野市"],
+            "岐阜県": ["岐阜市", "大垣市", "高山市", "多治見市", "関市", "中津川市", "美濃市", "瑞浪市", "羽島市", "恵那市", "美濃加茂市", "土岐市", "各務原市", "可児市", "山県市", "瑞穂市", "飛騨市", "本巣市", "郡上市", "下呂市", "海津市"],
+            "静岡県": ["静岡市", "浜松市", "沼津市", "熱海市", "三島市", "富士宮市", "伊東市", "島田市", "富士市", "磐田市", "焼津市", "掛川市", "藤枝市", "御殿場市", "袋井市", "下田市", "裾野市", "湖西市", "伊豆市", "御前崎市", "菊川市", "伊豆の国市", "牧之原市"],
+            "愛知県": ["名古屋市", "豊橋市", "岡崎市", "一宮市", "瀬戸市", "半田市", "春日井市", "豊川市", "津島市", "碧南市", "刈谷市", "豊田市", "安城市", "西尾市", "蒲郡市", "犬山市", "常滑市", "江南市", "小牧市", "稲沢市", "新城市", "東海市", "大府市", "知多市", "知立市", "尾張旭市", "高浜市", "岩倉市", "豊明市", "日進市", "田原市", "愛西市", "清須市", "北名古屋市", "弥富市", "みよし市", "あま市", "長久手市"],
+            "三重県": ["津市", "四日市市", "伊勢市", "松阪市", "桑名市", "鈴鹿市", "名張市", "尾鷲市", "亀山市", "鳥羽市", "熊野市", "いなべ市", "志摩市", "伊賀市"],
+            "滋賀県": ["大津市", "彦根市", "長浜市", "近江八幡市", "草津市", "守山市", "栗東市", "甲賀市", "野洲市", "湖南市", "高島市", "東近江市", "米原市"],
+            "京都府": ["京都市", "福知山市", "舞鶴市", "綾部市", "宇治市", "宮津市", "亀岡市", "城陽市", "向日市", "長岡京市", "八幡市", "京田辺市", "京丹後市", "南丹市", "木津川市"],
+            "大阪府": ["大阪市", "堺市", "岸和田市", "豊中市", "池田市", "吹田市", "泉大津市", "高槻市", "貝塚市", "守口市", "枚方市", "茨木市", "八尾市", "泉佐野市", "富田林市", "寝屋川市", "河内長野市", "松原市", "大東市", "和泉市", "箕面市", "柏原市", "羽曳野市", "門真市", "摂津市", "高石市", "藤井寺市", "東大阪市", "泉南市", "四條畷市", "交野市", "大阪狭山市", "阪南市"],
+            "兵庫県": ["神戸市", "姫路市", "尼崎市", "明石市", "西宮市", "洲本市", "芦屋市", "伊丹市", "相生市", "豊岡市", "加古川市", "赤穂市", "西脇市", "宝塚市", "三木市", "高砂市", "川西市", "小野市", "三田市", "加西市", "丹波篠山市", "養父市", "丹波市", "南あわじ市", "朝来市", "淡路市", "宍粟市", "加東市", "たつの市"],
+            "奈良県": ["奈良市", "大和高田市", "大和郡山市", "天理市", "橿原市", "桜井市", "五條市", "御所市", "生駒市", "香芝市", "葛城市", "宇陀市"],
+            "和歌山県": ["和歌山市", "海南市", "橋本市", "有田市", "御坊市", "田辺市", "新宮市", "紀の川市", "岩出市"],
+            "鳥取県": ["鳥取市", "米子市", "倉吉市", "境港市"],
+            "島根県": ["松江市", "浜田市", "出雲市", "益田市", "大田市", "安来市", "江津市", "雲南市"],
+            "岡山県": ["岡山市", "倉敷市", "津山市", "玉野市", "笠岡市", "井原市", "総社市", "高梁市", "新見市", "備前市", "瀬戸内市", "赤磐市", "真庭市", "美作市", "浅口市"],
+            "広島県": ["広島市", "呉市", "竹原市", "三原市", "尾道市", "福山市", "府中市", "三次市", "庄原市", "大竹市", "東広島市", "廿日市市", "安芸高田市", "江田島市"],
+            "山口県": ["下関市", "宇部市", "山口市", "萩市", "防府市", "下松市", "岩国市", "光市", "長門市", "柳井市", "美祢市", "周南市", "山陽小野田市"],
+            "徳島県": ["徳島市", "鳴門市", "小松島市", "阿南市", "吉野川市", "阿波市", "美馬市", "三好市"],
+            "香川県": ["高松市", "丸亀市", "坂出市", "善通寺市", "観音寺市", "さぬき市", "東かがわ市", "三豊市"],
+            "愛媛県": ["松山市", "今治市", "宇和島市", "八幡浜市", "新居浜市", "西条市", "大洲市", "伊予市", "四国中央市", "西予市", "東温市"],
+            "高知県": ["高知市", "室戸市", "安芸市", "南国市", "土佐市", "須崎市", "宿毛市", "土佐清水市", "四万十市", "香南市", "香美市"],
+            "福岡県": ["北九州市", "福岡市", "大牟田市", "久留米市", "直方市", "飯塚市", "田川市", "柳川市", "八女市", "筑後市", "大川市", "行橋市", "豊前市", "中間市", "小郡市", "筑紫野市", "春日市", "大野城市", "宗像市", "太宰府市", "古賀市", "福津市", "うきは市", "宮若市", "嘉麻市", "朝倉市", "みやま市", "糸島市", "那珂川市"],
+            "佐賀県": ["佐賀市", "唐津市", "鳥栖市", "多久市", "伊万里市", "武雄市", "鹿島市", "小城市", "嬉野市", "神埼市"],
+            "長崎県": ["長崎市", "佐世保市", "島原市", "諫早市", "大村市", "平戸市", "松浦市", "対馬市", "壱岐市", "五島市", "西海市", "雲仙市", "南島原市"],
+            "熊本県": ["熊本市", "八代市", "人吉市", "荒尾市", "水俣市", "玉名市", "山鹿市", "菊池市", "宇土市", "上天草市", "宇城市", "阿蘇市", "合志市"],
+            "大分県": ["大分市", "別府市", "中津市", "日田市", "佐伯市", "臼杵市", "津久見市", "竹田市", "豊後高田市", "杵築市", "宇佐市", "豊後大野市", "由布市", "国東市"],
+            "宮崎県": ["宮崎市", "都城市", "延岡市", "日南市", "小林市", "日向市", "串間市", "西都市", "えびの市"],
+            "鹿児島県": ["鹿児島市", "鹿屋市", "枕崎市", "阿久根市", "出水市", "指宿市", "西之表市", "垂水市", "薩摩川内市", "日置市", "曽於市", "霧島市", "いちき串木野市", "南さつま市", "志布志市", "奄美市", "南九州市", "伊佐市", "姶良市"],
+            "沖縄県": ["那覇市", "宜野湾市", "石垣市", "浦添市", "名護市", "糸満市", "沖縄市", "豊見城市", "うるま市", "宮古島市", "南城市"]
+        };
+        const prefectureInput = document.getElementById('prefectureInput');
+        const citySelect = document.getElementById('citySelect');
+        const prefCodeDisplay = document.getElementById('prefCodeDisplay');
+        const weatherResult = document.getElementById('weatherResult');
+        prefectureInput.addEventListener('input', function () {
+            const pref = prefectureInput.value.trim();
+            citySelect.innerHTML = '';
+            if (cityData[pref] && cityData[pref].length > 0) {
+                citySelect.disabled = false;
+                citySelect.innerHTML = '<option value="">市区町村を選択してください</option>';
+                cityData[pref].forEach(city => {
+                    const option = document.createElement('option');
+                    option.value = city;
+                    option.textContent = city;
+                    citySelect.appendChild(option);
+                });
+            } else if (cityData[pref]) {
+                citySelect.disabled = false;
+                citySelect.innerHTML = '<option value="">市区町村データ未登録</option>';
+            } else {
+                citySelect.disabled = true;
+                citySelect.innerHTML = '<option value="">都道府県を正しく入力してください</option>';
+            }
+            if (prefCodeMap[pref]) {
+                prefCodeDisplay.textContent = `都道府県コード: ${prefCodeMap[pref]}`;
+            } else if (pref.length > 0) {
+                prefCodeDisplay.textContent = '都道府県コード: 未対応または未入力';
+            } else {
+                prefCodeDisplay.textContent = '';
+            }
+
+        });
+        citySelect.disabled = true;
+
+        // 都道府県名→気象庁API用コード（全47都道府県対応）
+        const prefCodeMap = {
+            "北海道": "016000",
+            "青森県": "020000",
+            "岩手県": "030000",
+            "宮城県": "040000",
+            "秋田県": "050000",
+            "山形県": "060000",
+            "福島県": "070000",
+            "茨城県": "080000",
+            "栃木県": "090000",
+            "群馬県": "100000",
+            "埼玉県": "110000",
+            "千葉県": "120000",
+            "東京都": "130000",
+            "神奈川県": "140000",
+            "新潟県": "150000",
+            "富山県": "160000",
+            "石川県": "170000",
+            "福井県": "180000",
+            "山梨県": "190000",
+            "長野県": "200000",
+            "岐阜県": "210000",
+            "静岡県": "220000",
+            "愛知県": "230000",
+            "三重県": "240000",
+            "滋賀県": "250000",
+            "京都府": "260000",
+            "大阪府": "270000",
+            "兵庫県": "280000",
+            "奈良県": "290000",
+            "和歌山県": "300000",
+            "鳥取県": "310000",
+            "島根県": "320000",
+            "岡山県": "330000",
+            "広島県": "340000",
+            "山口県": "350000",
+            "徳島県": "360000",
+            "香川県": "370000",
+            "愛媛県": "380000",
+            "高知県": "390000",
+            "福岡県": "400000",
+            "佐賀県": "410000",
+            "長崎県": "420000",
+            "熊本県": "430000",
+            "大分県": "440000",
+            "宮崎県": "450000",
+            "鹿児島県": "460100",
+            "沖縄県": "471000"
+        };
+
+        // 都道府県→気象庁エリア名マップ
+        const areaNameMap = {
+            "北海道": "石狩地方",
+            "青森県": "津軽",
+            "岩手県": "内陸",
+            "宮城県": "東部",
+            "秋田県": "沿岸",
+            "山形県": "村山",
+            "福島県": "中通り",
+            "茨城県": "北部",
+            "栃木県": "南部",
+            "群馬県": "南部",
+            "埼玉県": "南部",
+            "千葉県": "北西部",
+            "東京都": "東京地方",
+            "神奈川県": "東部",
+            "新潟県": "下越",
+            "富山県": "東部",
+            "石川県": "加賀",
+            "福井県": "嶺北",
+            "山梨県": "中・西部",
+            "長野県": "北部",
+            "岐阜県": "美濃地方",
+            "静岡県": "中部",
+            "愛知県": "西部",
+            "三重県": "北中部",
+            "滋賀県": "南部",
+            "京都府": "南部",
+            "大阪府": "大阪府",
+            "兵庫県": "南部",
+            "奈良県": "北部",
+            "和歌山県": "北部",
+            "鳥取県": "東部",
+            "島根県": "東部",
+            "岡山県": "南部",
+            "広島県": "南部",
+            "山口県": "西部",
+            "徳島県": "北部",
+            "香川県": "香川県",
+            "愛媛県": "中予",
+            "高知県": "中部",
+            "福岡県": "福岡地方",
+            "佐賀県": "南部",
+            "長崎県": "南部",
+            "熊本県": "熊本地方",
+            "大分県": "中部",
+            "宮崎県": "南部平野部",
+            "鹿児島県": "薩摩地方",
+            "沖縄県": "本島中南部"
+        };
+
+        prefectureInput.addEventListener('input', async function () {
+            const pref = prefectureInput.value.trim();
+            citySelect.innerHTML = '';
+            if (cityData[pref] && cityData[pref].length > 0) {
+                citySelect.disabled = false;
+                citySelect.innerHTML = '<option value="">市区町村を選択してください</option>';
+                cityData[pref].forEach(city => {
+                    const option = document.createElement('option');
+                    option.value = city;
+                    option.textContent = city;
+                    citySelect.appendChild(option);
+                });
+            } else if (cityData[pref]) {
+                citySelect.disabled = false;
+                citySelect.innerHTML = '<option value="">市区町村データ未登録</option>';
+            } else {
+                citySelect.disabled = true;
+                citySelect.innerHTML = '<option value="">都道府県を正しく入力してください</option>';
+            }
+            if (prefCodeMap[pref]) {
+                prefCodeDisplay.textContent = `都道府県コード: ${prefCodeMap[pref]}`;
+                // 代表エリア名で天気予報を自動表示
+                const areaName = areaNameMap[pref];
+                if (areaName) {
+                    weatherResult.textContent = '天気予報取得中...';
+                    const url = `https://www.jma.go.jp/bosai/forecast/data/forecast/${prefCodeMap[pref]}.json`;
+                    try {
+                        const res = await fetch(url);
+                        if (!res.ok) throw new Error('API取得失敗');
+                        const data = await res.json();
+                        const areas = data[0].timeSeries[0].areas;
+                        const area = areas.find(a => a.area.name === areaName);
+                        if (!area) {
+                            weatherResult.textContent = '該当都道府県の代表エリアの天気予報データがありません。';
+                            return;
+                        }
+                        const times = data[0].timeSeries[0].timeDefines;
+                        const weathers = area.weathers;
+                        let html = `<b>${pref}（${areaName}）の天気予報</b><br><ul>`;
+                        for (let i = 0; i < weathers.length; i++) {
+                            html += `<li>${times[i].slice(0, 10)}: ${weathers[i]}</li>`;
+                        }
+                        html += '</ul>';
+                        weatherResult.innerHTML = html;
+                    } catch (e) {
+                        weatherResult.textContent = '天気予報データの取得に失敗しました。';
+                    }
+                } else {
+                    weatherResult.textContent = '代表エリア名データがありません。';
+                }
+            } else if (pref.length > 0) {
+                prefCodeDisplay.textContent = '都道府県コード: 未対応または未入力';
+                weatherResult.textContent = '';
+            } else {
+                prefCodeDisplay.textContent = '';
+                weatherResult.textContent = '';
+            }
+        });
+
+        // 市区町村→エリア名変換（都道府県ごとに代表的な市区町村をエリア名にマッピング、なければ都道府県の代表エリア名を使う）
+        const cityAreaNameMap = {
+            "東京都": {
+                "千代田区": "東京地方", "八王子市": "多摩北部", "青梅市": "多摩西部"
+            },
+            "北海道": {
+                "札幌市": "石狩地方", "旭川市": "上川地方", "函館市": "渡島地方"
+            },
+            // ...他の都道府県も必要に応じて追加...
+        };
+
+        // 市区町村選択時に天気予報を出力する
+        citySelect.addEventListener('change', async function () {
+            const pref = prefectureInput.value.trim();
+            const city = citySelect.value;
+            if (!pref || !city || !prefCodeMap[pref]) {
+                weatherResult.textContent = '';
+                return;
+            }
+            // 市区町村→エリア名変換
+            let areaName = (cityAreaNameMap[pref] && cityAreaNameMap[pref][city]) ? cityAreaNameMap[pref][city] : areaNameMap[pref];
+            if (!areaName) {
+                weatherResult.textContent = 'エリア名データがありません。';
+                return;
+            }
+            weatherResult.textContent = '天気予報取得中...';
+            const url = `https://www.jma.go.jp/bosai/forecast/data/forecast/${prefCodeMap[pref]}.json`;
+            try {
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('API取得失敗');
+                const data = await res.json();
+                const areas = data[0].timeSeries[0].areas;
+                const area = areas.find(a => a.area.name === areaName);
+                if (!area) {
+                    weatherResult.textContent = '該当エリアの天気予報データがありません。';
+                    return;
+                }
+                const times = data[0].timeSeries[0].timeDefines;
+                const weathers = area.weathers;
+                let html = `<b>${pref} ${city}（${areaName}）の天気予報</b><br><ul>`;
+                for (let i = 0; i < weathers.length; i++) {
+                    html += `<li>${times[i].slice(0, 10)}: ${weathers[i]}</li>`;
+                }
+                html += '</ul>';
+                weatherResult.innerHTML = html;
+            } catch (e) {
+                weatherResult.textContent = '天気予報データの取得に失敗しました。';
+            }
+        });
+
+        document.getElementById('prefectureInput').addEventListener('input', async function () {
+            // 都道府県コードマッピング
+            // 各都道府県名に対応する気象庁APIのコードを定義
+            const prefCodeMap = {
+                "北海道": "016000",
+                "青森県": "020000",
+                "岩手県": "030000",
+                "宮城県": "040000",
+                "秋田県": "050000",
+                "山形県": "060000",
+                "福島県": "070000",
+                "茨城県": "080000",
+                "栃木県": "090000",
+                "群馬県": "100000",
+                "埼玉県": "110000",
+                "千葉県": "120000",
+                "東京都": "130000",
+                "神奈川県": "140000",
+                "新潟県": "150000",
+                "富山県": "160000",
+                "石川県": "170000",
+                "福井県": "180000",
+                "山梨県": "190000",
+                "長野県": "200000",
+                "岐阜県": "210000",
+                "静岡県": "220000",
+                "愛知県": "230000",
+                "三重県": "240000",
+                "滋賀県": "250000",
+                "京都府": "260000",
+                "大阪府": "270000",
+                "兵庫県": "280000",
+                "奈良県": "290000",
+                "和歌山県": "300000",
+                "鳥取県": "310000",
+                "島根県": "320000",
+                "岡山県": "330000",
+                "広島県": "340000",
+                "山口県": "350000",
+                "徳島県": "360000",
+                "香川県": "370000",
+                "愛媛県": "380000",
+                "高知県": "390000",
+                "福岡県": "400000",
+                "佐賀県": "410000",
+                "長崎県": "420000",
+                "熊本県": "430000",
+                "大分県": "440000",
+                "宮崎県": "450000",
+                "鹿児島県": "460100",
+                "沖縄県": "471000"
+            };
+
+            // 入力された都道府県名を取得し、前後の空白を削除
+            const pref = this.value.trim();
+
+            // 天気予報を表示する要素を取得
+            const weatherResult = document.getElementById('weatherResult');
+
+            // 入力された都道府県名がマッピングに存在しない場合のエラーメッセージ
+            if (!prefCodeMap[pref]) {
+                weatherResult.textContent = '都道府県コードが見つかりません。';
+                return;
+            }
+
+            // 天気予報取得中のメッセージを表示
+            weatherResult.textContent = '天気予報取得中...';
+
+            // 気象庁APIのURLを構築
+            const url = `https://www.jma.go.jp/bosai/forecast/data/forecast/${prefCodeMap[pref]}.json`;
+
+            try {
+                // 気象庁APIから天気予報データを取得
+                const res = await fetch(url);
+
+                // APIのレスポンスが正常でない場合はエラーをスロー
+                if (!res.ok) throw new Error('API取得失敗');
+
+                // レスポンスデータをJSON形式で解析
+                const data = await res.json();
+
+                // 最低気温データを取得
+                const tempsMin = data[1].timeSeries.find(series => series.areas[0].tempsMin);
+
+                // 最高気温データを取得
+                const tempsMax = data[1].timeSeries.find(series => series.areas[0].tempsMax);
+
+                // 天気データを取得
+                const weatherSeries = data[0].timeSeries.find(series => series.areas[0].weathers);
+
+                // 各データの配列を取得
+                const times = tempsMin.timeDefines; // 時間データ
+                const minValues = tempsMin.areas[0].tempsMin; // 最低気温
+                const maxValues = tempsMax.areas[0].tempsMax; // 最高気温
+                const weatherValues = weatherSeries.areas[0].weathers; // 天気
+
+                // HTMLに天気予報を表示（全データをループ処理）
+                let html = `<b>${pref}の天気予報、最高気温、最低気温</b><br><ul>`;
+                for (let i = 0; i < minValues.length; i++) {
+                    // 各日の天気、最低気温、最高気温をリスト形式で追加
+                    html += `<li>${times[i].slice(0, 10)}: 天気 ${weatherValues[i]}, 最低気温 ${minValues[i]}℃, 最高気温 ${maxValues[i]}℃</li>`;
+                }
+                html += '</ul>';
+
+                // 結果をHTML要素に反映
+                weatherResult.innerHTML = html;
+            } catch (e) {
+                // データ取得失敗時のエラーメッセージを表示
+                weatherResult.textContent = 'データの取得に失敗しました。';
+            }
+        });
+
+        document.getElementById('citySelect').addEventListener('change', async function () {
+            // 都道府県コードマッピング
+            const prefCodeMap = {
+                "北海道": "016000",
+                "青森県": "020000",
+                "岩手県": "030000",
+                "宮城県": "040000",
+                "秋田県": "050000",
+                "山形県": "060000",
+                "福島県": "070000",
+                "茨城県": "080000",
+                "栃木県": "090000",
+                "群馬県": "100000",
+                "埼玉県": "110000",
+                "千葉県": "120000",
+                "東京都": "130000",
+                "神奈川県": "140000",
+                "新潟県": "150000",
+                "富山県": "160000",
+                "石川県": "170000",
+                "福井県": "180000",
+                "山梨県": "190000",
+                "長野県": "200000",
+                "岐阜県": "210000",
+                "静岡県": "220000",
+                "愛知県": "230000",
+                "三重県": "240000",
+                "滋賀県": "250000",
+                "京都府": "260000",
+                "大阪府": "270000",
+                "兵庫県": "280000",
+                "奈良県": "290000",
+                "和歌山県": "300000",
+                "鳥取県": "310000",
+                "島根県": "320000",
+                "岡山県": "330000",
+                "広島県": "340000",
+                "山口県": "350000",
+                "徳島県": "360000",
+                "香川県": "370000",
+                "愛媛県": "380000",
+                "高知県": "390000",
+                "福岡県": "400000",
+                "佐賀県": "410000",
+                "長崎県": "420000",
+                "熊本県": "430000",
+                "大分県": "440000",
+                "宮崎県": "450000",
+                "鹿児島県": "460100",
+                "沖縄県": "471000"
+            };
+
+            // 入力された都道府県名を取得
+            const pref = document.getElementById('prefectureInput').value.trim();
+            const weatherResult = document.getElementById('weatherResult');
+
+            // 都道府県コードが存在しない場合のエラーメッセージ
+            if (!prefCodeMap[pref]) {
+                weatherResult.textContent = '都道府県コードが見つかりません。';
+                return;
+            }
+
+            // 天気予報取得中のメッセージを表示
+            weatherResult.textContent = '天気予報取得中...';
+            const url = `https://www.jma.go.jp/bosai/forecast/data/forecast/${prefCodeMap[pref]}.json`;
+
+            try {
+                // 気象庁APIからデータを取得
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('API取得失敗');
+                const data = await res.json();
+
+                // 最低気温、最高気温、天気データを取得
+                const tempsMin = data[1].timeSeries.find(series => series.areas[0].tempsMin);
+                const tempsMax = data[1].timeSeries.find(series => series.areas[0].tempsMax);
+                const weatherSeries = data[0].timeSeries.find(series => series.areas[0].weathers);
+                const times = tempsMin.timeDefines;
+                const minValues = tempsMin.areas[0].tempsMin;
+                const maxValues = tempsMax.areas[0].tempsMax;
+                const weatherValues = weatherSeries.areas[0].weathers;
+
+                // HTMLに天気予報を表示（2日分のみ）
+                let html = `<b>${pref}の天気予報、最高気温、最低気温</b><br><ul>`;
+                for (let i = 0; i < Math.min(7, minValues.length); i++) {
+                    html += `<li>${times[i].slice(0, 10)}: 天気 ${weatherValues[i]}, 最低気温 ${minValues[i]}℃, 最高気温 ${maxValues[i]}℃</li>`;
+                }
+                html += '</ul>';
+                weatherResult.innerHTML = html;
+            } catch (e) {
+                // データ取得失敗時のエラーメッセージ
+                weatherResult.textContent = 'データの取得に失敗しました。';
+            }
+        });
+    </script>
+</body>
+
+</html>
