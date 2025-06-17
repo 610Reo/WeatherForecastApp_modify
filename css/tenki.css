@@ -1,0 +1,76 @@
+@charset "UTF-8";
+
+/* Tenki CSS Stylesheet */
+body {
+    background: #b3e0ff;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.centerWrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 100vh;
+}
+
+h2 {
+    text-align: center;
+    font-size: 2.2em;
+}
+
+#sampleform {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 40px;
+    font-size: 1.3em;
+}
+
+#sampleform input,
+#sampleform select {
+    font-size: 1.2em;
+    text-align: center;
+    margin-top: 8px;
+}
+
+#weatherResult {
+    margin-top: 70px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.5em;
+}
+
+ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+ul li {
+    margin: 0.3em 0;
+}
+
+.input-box {
+    border: 2px solid #3399cc;
+    border-radius: 10px;
+    padding: 18px 20px 10px 20px;
+    margin: 18px 0 0 0;
+    background: #e6f7ff;
+    box-shadow: 0 2px 8px rgba(51, 153, 204, 0.08);
+}
+
+.input-box+.input-box {
+    margin-top: 8px;
+}
+
+.result-box {
+    border: 2px solid #ff9900;
+    border-radius: 10px;
+    padding: 22px 24px 18px 24px;
+    margin: 18px 0 0 0;
+    background: #fffbe6;
+    box-shadow: 0 2px 8px rgba(255, 153, 0, 0.08);
+    min-width: 340px;
+    min-height: 60px;
+}
